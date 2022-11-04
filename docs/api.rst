@@ -1,9 +1,14 @@
+API Reference
+-------------
 
-.. If you created a package, create one automodule per module in the package.
+.. autoclass:: seeed_xiao_nrf52840.IMU
+    :members:
+    :inherited-members:
 
-.. If your library file(s) are nested in a directory (e.g. /adafruit_foo/foo.py)
-.. use this format as the module name: "adafruit_foo.foo"
+.. autoclass:: seeed_xiao_nrf52840.Mic
+    :members:
+    :inherited-members:
 
-.. automodule:: seeed_xiao_nrf52840
+.. autoclass:: seeed_xiao_nrf52840.Battery
     :members:
     :inherited-members:
