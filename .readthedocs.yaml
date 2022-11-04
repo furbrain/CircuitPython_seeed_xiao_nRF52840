@@ -13,7 +13,14 @@ build:
   tools:
     python: "3.8"
 
+sphinx:
+  configuration: docs/conf.py
+  fail_on_warning: true
+
 python:
   install:
     - requirements: docs/requirements.txt
     - requirements: requirements.txt
+    - method: pip
+      path: .
+  system_packages: true
