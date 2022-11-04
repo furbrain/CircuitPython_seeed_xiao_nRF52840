@@ -27,7 +27,14 @@ extensions = [
 # Uncomment the below if you use native CircuitPython modules such as
 # digitalio, micropython and busio. List the modules you use. Without it, the
 # autodoc module docs will fail to generate with a warning.
-autodoc_mock_imports = ["digitalio", "busio", "audiobusio"]
+autodoc_mock_imports = [
+    "digitalio",
+    "busio",
+    "audiobusio",
+    "board",
+    "analogio",
+    "microcontroller",
+]
 
 
 intersphinx_mapping = {
