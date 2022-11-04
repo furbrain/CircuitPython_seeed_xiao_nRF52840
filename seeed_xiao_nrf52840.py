@@ -25,41 +25,42 @@ Implementation Notes
 * Adafruit CircuitPython firmware for the supported boards:
   https://circuitpython.org/downloads
 
-.. todo:: Uncomment or remove the Bus Device and/or the Register library dependencies
-  based on the library's use of either.
-
 * Adafruit's LSM6DS library: https://github.com/adafruit/Adafruit_CircuitPython_LSM6DS
 """
+
 import time
 
-import analogio
-
-# imports
 import board
 import busio
 import digitalio
+import analogio
 from audiobusio import PDMIn
+import microcontroller
 
 from adafruit_lsm6ds.lsm6ds3 import LSM6DS3
+from circuitpython_typing import WriteableBuffer
 
 
 class IMU(LSM6DS3):
     """
     IMU on Seeed XIAO nRF52840 Sense (only available on Sense models).
-    This is an LSM6DS3 chip, and provides accelerometer and gyro readings
+    This is an LSM6DS3 chip, and provides accelerometer and gyro readings.
+    See https://docs.circuitpython.org/projects/lsm6dsox/en/latest/api.html for more details
     """
 
     def __init__(self):
+        """
+        Create an IMU instance. There are no arguments needed
+        """
         # turn on IMU
         self.pwr_pin = digitalio.DigitalInOut(board.IMU_PWR)
         self.pwr_pin.direction = digitalio.Direction.OUTPUT
         self.pwr_pin.value = True
+        # wait 50ms for device to turn on (datasheet states typical 35ms)
+        time.sleep(0.05)
 
         # set up i2c
         self.i2c_bus = busio.I2C(board.IMU_SCL, board.IMU_SDA)
-        time.sleep(
-            0.05
-        )  # wait 50ms for device to turn on (datasheet states typical 35ms)
 
         # finally initialise self
         super().__init__(self.i2c_bus, address=0x6A)
@@ -72,6 +73,12 @@ class IMU(LSM6DS3):
         self.pwr_pin.deinit()
         self.i2c_bus.deinit()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.deinit()
+
 
 class Mic(PDMIn):
     """
@@ -79,20 +86,68 @@ class Mic(PDMIn):
     boards
     """
 
-    def __init__(self, sample_rate, bit_depth):
+    def __init__(self, oversample: int = 64):
+        """Create a `Mic` object. This allows you to record audio signals from the onboard
+        microphone. The sample rate is fixed at 16000 and the bit depth is fixed at 16
+
+        :param int oversample: Number of single bit samples to decimate into a
+          final sample. Must be divisible by 8. Default is 64
+
+        Record 16-bit unsigned samples to buffer::
+
+          import audiobusio
+          import board
+
+          # Prep a buffer to record into. The array interface doesn't allow for
+          # constructing with a set size so we append to it until we have the size
+          # we want.
+          b = array.array("H")
+          for i in range(200):
+              b.append(0)
+          with Mic(sample_rate=16000) as mic:
+              mic.record(b, len(b))"""
+
         self.pwr_pin = digitalio.DigitalInOut(board.MIC_PWR)
         self.pwr_pin.direction = digitalio.Direction.OUTPUT
         self.pwr_pin.value = True
 
-        super().__init__(sample_rate, bit_depth)
+        super().__init__(
+            board.PDM_CLK,
+            board.PDM_DATA,
+            sample_rate=16000,
+            bit_depth=16,
+            mono=True,
+            oversample=oversample,
+            startup_delay=0.01,
+        )
+
+    def record(self, destination: WriteableBuffer, destination_length: int) -> None:
+        # pylint: disable=useless-super-delegation
+        # Just here so we can generate documentation
+        """Records destination_length bytes of samples to destination. This is
+        blocking.
+
+        An IOError may be raised when the destination is too slow to record the
+        audio at the given rate. For internal flash, writing all 1s to the file
+        before recording is recommended to speed up writes.
+
+        :return: The number of samples recorded. If this is less than ``destination_length``,
+          some samples were missed due to processing time."""
+        return super().record(destination, destination_length)
 
     def deinit(self):
         """
-        Turn off the Microphone and release all resources
+        Turn off the microphone and release all resources
         """
         super().deinit()
         self.pwr_pin.value = False
         self.pwr_pin.deinit()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.deinit()
 
 
 class Battery:
@@ -104,11 +159,14 @@ class Battery:
     CHARGE_100MA: int = 1
 
     def __init__(self):
+        """
+        Create a Battery management object
+        """
         self._charge_status = digitalio.DigitalInOut(board.CHARGE_STATUS)
         self._charge_status.direction = digitalio.Direction.INPUT
         self._charge_status.pull = digitalio.Pull.UP
 
-        self._charge_speed = digitalio.DigitalInOut(board.P0_17)
+        self._charge_speed = digitalio.DigitalInOut(microcontroller.pin.P0_13)
         self._charge_speed.direction = digitalio.Direction.INPUT
 
         self._read_batt_enable = digitalio.DigitalInOut(board.READ_BATT_ENABLE)
