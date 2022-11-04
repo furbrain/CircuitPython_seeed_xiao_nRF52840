@@ -9,7 +9,7 @@ import sys
 import datetime
 
 sys.path.insert(0, os.path.abspath(".."))
-sys.path.insert(0, os.path.abspath("../venv/lib/python3.6/site-packages"))
+# sys.path.insert(0, os.path.abspath("../venv/lib/python3.6/site-packages"))
 
 # -- General configuration ------------------------------------------------
 
@@ -39,6 +39,10 @@ autodoc_mock_imports = [
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
+    "adafruit-lsm6ds": (
+        "https://docs.circuitpython.org/projects/lsm6dsox/en/latest/",
+        None,
+    ),
     "CircuitPython": ("https://docs.circuitpython.org/en/latest/", None),
 }
 
