@@ -12,7 +12,7 @@ import board
 from seeed_xiao_nrf52840 import IMU, Mic, Battery
 
 with Battery() as bat:
-    print(f"Charge_status: {bat.charge_status}")
+    print(f"Charge complete: {bat.charge_status}")
     print(f"Voltage: {bat.voltage}")
     print(f"Charge_current high?: {bat.charge_current}")
     print("Setting charge current to high")

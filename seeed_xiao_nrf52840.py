@@ -38,7 +38,11 @@ from audiobusio import PDMIn
 import microcontroller
 
 from adafruit_lsm6ds.lsm6ds3 import LSM6DS3
-from circuitpython_typing import WriteableBuffer
+
+try:
+    from circuitpython_typing import WriteableBuffer
+except ImportError:
+    pass
 
 
 class IMU(LSM6DS3):
@@ -191,7 +195,13 @@ class Battery:
         self._read_batt_enable.value = False
         # wait a little bit to allow voltage to settle
         time.sleep(0.003)
-        value = (self._vbat.value / 65535.0) * self._vbat.reference_voltage * 2
+        # we need to take 10 readings in quick succession. The nrf port
+        # selects a very short acquisition time, which is not enough with
+        # a really high impedance input like we are using, so if we take several
+        # readings, the later ones will be more accurate
+        for _i in range(9):
+            _ = self._vbat.value
+        value = (self._vbat.value / 65535.0) * self._vbat.reference_voltage * 3.1
         self._read_batt_enable.direction = digitalio.Direction.INPUT
         return value
 
