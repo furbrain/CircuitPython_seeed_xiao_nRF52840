@@ -18,7 +18,7 @@ Introduction
     :target: https://github.com/psf/black
     :alt: Code Style: Black
 
-Provides access to onboard sensors and battet
+Provides access to onboard sensors and battery charge management circuitry
 
 
 Dependencies
